@@ -25,16 +25,26 @@ class ProductImportService
             'duplicates' => 0,
         ];
 
-        // Load CSV using League\CSV (bundled with Laravel via composer if needed)
+        // Load CSV
         $csv = Reader::createFromPath($csvPath, 'r');
-        $csv->setHeaderOffset(0); // First row is header
+        $csv->setHeaderOffset(0);
+
+        //Get & trim headers
+        $rawHeaders = $csv->getHeader();
+        $trimmedHeaders = array_map('trim', $rawHeaders);
+
         $records = (new Statement())->process($csv);
 
         // Track SKUs to detect duplicates within same CSV
         $seenSkus = [];
-
+        
         foreach ($records as $row) {
             $summary['total']++;
+
+            $row = array_combine($trimmedHeaders, array_values($row));
+
+            // Trim values too
+            $row = array_map('trim', $row);
 
             // Validate required columns
             if (empty($row['sku']) || empty($row['name'])) {

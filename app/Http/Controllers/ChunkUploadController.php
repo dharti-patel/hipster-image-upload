@@ -116,4 +116,17 @@ class ChunkUploadController extends Controller
             'variants' => $image->variants,
         ]);
     }
+
+    public function attachImage(Request $request) {
+        $request->validate([
+            'sku' => 'required|string',
+            'image_id' => 'required|integer',
+        ]);
+
+        $product = \App\Models\Product::where('sku', $request->sku)->firstOrFail();
+        $product->primary_image_id = $request->image_id;
+        $product->save();
+
+        return response()->json(['status' => 'linked']);
+    }
 }

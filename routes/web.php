@@ -23,7 +23,5 @@ Route::get('/product-upload', function () {
     return view('product_upload');
 });
 
-Route::prefix('products')->group(function () {
-    Route::post('import', [CSVImportController::class, 'import']);
-});
 
+Route::post('/products/import-csv', [CSVImportController::class, 'import'])->name('products.import-csv');

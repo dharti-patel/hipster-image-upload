@@ -22,21 +22,26 @@ class CSVImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt'],
+            'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        $file = $request->file('file');
-        $tempPath = $file->storeAs('temp/csv', uniqid('import_').'.csv');
+        $path = $request->file('csv_file')->getRealPath();
 
-        $fullPath = Storage::path($tempPath);
-        $summary = $this->importService->import($fullPath);
+        try {
+            $summary = $this->importService->import($path);
 
-        // Optionally delete after processing
-        Storage::delete($tempPath);
+            // Return JSON including products array for image matching
+            $products = \App\Models\Product::latest()->take($summary['total'])->get(['sku', 'name']);
 
-        return response()->json([
-            'status' => 'success',
-            'summary' => $summary,
-        ]);
+            return response()->json([
+                'summary' => $summary,
+                'products' => $products,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'CSV import failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
